@@ -1,4 +1,4 @@
-const CACHE_NAME = 'linksaver-chat-v1';
+const CACHE_NAME = 'linksaver-chat-v2';
 const ASSETS = [
   './',
   './index.html',
