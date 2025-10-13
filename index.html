@@ -13,9 +13,9 @@
   <div id="app" class="app">
     <header class="app-header">
       <div class="header-left">
-        <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙️</button>
+        <div class="app-title">LinkSaver Chat</div>
       </div>
-      <div class="header-center">
+      <div class="header-right">
         <div id="categoryDropdown" class="dropdown">
           <button id="categoryToggle" class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">
             <span id="currentCategoryLabel">General</span>
@@ -34,23 +34,7 @@
           </div>
         </div>
       </div>
-      <div class="header-right">
-        <button id="searchToggle" class="icon-btn" aria-label="Search">🔍</button>
-      </div>
     </header>
-
-    <div id="selectionBar" class="selection-bar hidden" role="toolbar" aria-label="Selection actions">
-      <div class="selection-count" id="selectionCount">0 selected</div>
-      <div class="spacer"></div>
-      <button id="actionStar" class="icon-btn" title="Star / Unstar" aria-label="Star">⭐</button>
-      <button id="actionCopy" class="icon-btn" title="Copy" aria-label="Copy">📋</button>
-      <button id="actionShare" class="icon-btn" title="Share" aria-label="Share">📤</button>
-      <button id="actionDelete" class="icon-btn" title="Delete" aria-label="Delete">🗑️</button>
-    </div>
-
-    <div id="searchBar" class="search-bar hidden">
-      <input id="searchInput" type="search" placeholder="Search messages and links" autocomplete="off" />
-    </div>
 
     <main id="chat" class="chat" aria-live="polite"></main>
 
@@ -67,36 +51,11 @@
     </div>
 
     <div id="inputBar" class="input-bar">
-      <input id="linkInput" type="text" inputmode="text" placeholder="Type a message or paste links" autocomplete="off" />
-      <button id="sendBtn" class="send-btn" aria-label="Send" title="Send">
-        ✈️
-      </button>
+      <input id="linkInput" type="url" inputmode="url" placeholder="Paste or type a link" autocomplete="off" />
+      <button id="sendBtn" class="btn primary">Send</button>
     </div>
 
     <div id="offlineBadge" class="offline-badge hidden">Offline — previews will sync later</div>
-    <div id="settingsOverlay" class="overlay hidden" tabindex="-1"></div>
-    <aside id="settingsPanel" class="settings-panel hidden" aria-hidden="true">
-      <div class="settings-header">
-        <h2>Settings</h2>
-        <button id="settingsClose" class="icon-btn" aria-label="Close">✕</button>
-      </div>
-      <div class="settings-content">
-        <div class="setting-row">
-          <label for="themeToggle">Dark Mode</label>
-          <input id="themeToggle" type="checkbox" />
-        </div>
-        <div class="setting-row">
-          <button id="clearDataBtn" class="btn">Clear local data</button>
-        </div>
-        <div class="setting-row about">
-          <div class="about-text">
-            <div>LinkSaver Chat</div>
-            <div class="muted">v1.1 • Hosted on GitHub Pages</div>
-          </div>
-          <a href="https://github.com/" target="_blank" rel="noopener noreferrer" class="btn">About</a>
-        </div>
-      </div>
-    </aside>
   </div>
 
   <script src="script.js" defer></script>
