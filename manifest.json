@@ -1,0 +1,11 @@
+{
+  "name": "LinkSaver Chat",
+  "short_name": "LinkSaver",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#128C7E",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

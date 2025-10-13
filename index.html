@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#128C7E" />
+  <title>LinkSaver Chat</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="app-title">LinkSaver Chat</div>
+      </div>
+      <div class="header-right">
+        <div id="categoryDropdown" class="dropdown">
+          <button id="categoryToggle" class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+            <span id="currentCategoryLabel">General</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div id="categoryMenu" class="dropdown-menu" role="menu" aria-hidden="true">
+            <div class="menu-header">
+              <span>Categories</span>
+              <button id="addCategoryBtn" class="icon-btn" title="Add category" aria-label="Add category">+</button>
+            </div>
+            <ul id="categoryList" class="category-list"></ul>
+            <div id="newCategoryRow" class="new-category-row hidden">
+              <input id="newCategoryInput" type="text" placeholder="New category name" maxlength="40" />
+              <button id="confirmAddCategory" class="btn">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="chat" class="chat" aria-live="polite"></main>
+
+    <div id="instantPreview" class="instant-preview hidden" aria-live="polite">
+      <div class="preview-thumb"><img id="previewThumb" alt="" /></div>
+      <div class="preview-content">
+        <div id="previewTitle" class="preview-title"></div>
+        <div id="previewDesc" class="preview-desc"></div>
+        <div class="preview-actions">
+          <button id="previewSend" class="btn primary">Send</button>
+          <button id="previewDismiss" class="icon-btn" aria-label="Dismiss preview">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="inputBar" class="input-bar">
+      <input id="linkInput" type="url" inputmode="url" placeholder="Paste or type a link" autocomplete="off" />
+      <button id="sendBtn" class="btn primary">Send</button>
+    </div>
+
+    <div id="offlineBadge" class="offline-badge hidden">Offline — previews will sync later</div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
