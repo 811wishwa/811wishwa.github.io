@@ -18,7 +18,7 @@ body{
   background:var(--bg);
 }
 .app{
-  min-height:100dvh;
+  min-height:100vh;
   display:flex;
   flex-direction:column;
 }
@@ -84,7 +84,7 @@ body{
 .preview-card .info{ min-width:0; flex:1; }
 .preview-card .title{ font-weight:700; margin:0 0 4px 0; font-size:14px; }
 .preview-card .title a{ color:#0b5b47; text-decoration:none; }
-.preview-card .title a:hover{ text-decoration:underline; }
+.preview-card .title a:hover,.preview-card .title a:focus{ text-decoration:underline; outline:none; }
 .preview-card .desc{ color:var(--muted); font-size:13px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .status-text{ margin-top:6px; font-size:12px; color:#a06b00; }
 .status-error{ color:#a30000; }
@@ -97,6 +97,8 @@ body{
 .input-bar input{
   flex:1; padding:12px 14px; border:1px solid var(--border); border-radius:12px; font-size:16px;
 }
+/* Reduce layout shift when showing instant preview */
+.instant-preview.hidden{ display:none !important; height:0; }
 
 /* Instant preview */
 .instant-preview{
