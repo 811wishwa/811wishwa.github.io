@@ -1,5 +1,7 @@
 (() => {
   const STORAGE_KEY = 'linkSaverChat';
+  // Tracks the latest preview request to prevent stale updates
+  let previewRequestId = 0;
 
   /** @type {{categories: string[], lastCategory: string, links: Record<string, Array<{id:string,url:string,title:string,image:string,description:string,status:'ok'|'pending'|'error'}>>}} */
   let state = loadState();
@@ -94,11 +96,13 @@
   });
 
   function onConfirmAddCategory(){
-    const name = newCategoryInput.value.trim();
-    if (!name) return;
-    if (state.categories.includes(name)) { alert('Category already exists.'); return; }
+    const nameRaw = newCategoryInput.value.trim();
+    if (!nameRaw) return;
+    const name = nameRaw.replace(/\s+/g, ' ').slice(0, 40);
+    const exists = state.categories.some(c => c.toLowerCase() === name.toLowerCase());
+    if (exists) { alert('Category already exists.'); return; }
     state.categories.unshift(name);
-    state.links[name] = [];
+    state.links[name] = state.links[name] || [];
     setCurrentCategory(name);
     saveState();
     renderCategoryDropdown();
@@ -240,7 +244,14 @@
   }
 
   function scrollChatToBottom(){
-    setTimeout(() => { chatEl.scrollTop = chatEl.scrollHeight; }, 0);
+    const raf = window.requestAnimationFrame || function(cb){ return setTimeout(cb, 0); };
+    raf(() => {
+      if (typeof chatEl.scrollTo === 'function') {
+        chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
+      } else {
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+    });
   }
 
   // Input + sending
@@ -255,13 +266,18 @@
     if (!text) return;
     const normalized = normalizeUrl(text);
     if (!isLikelyUrl(normalized)) return;
-    showInstantPreview({ url: normalized, title: 'Fetching preview…', description: '', image: '', status: navigator.onLine ? 'pending' : 'pending' });
+    const reqId = ++previewRequestId;
+    showInstantPreview({ url: normalized, title: 'Fetching preview…', description: '', image: '', status: 'pending' });
     if (!navigator.onLine) return; // Show pending until we go online
     try{
       const meta = await fetchPreview(normalized);
-      showInstantPreview(meta);
+      if (reqId === previewRequestId) {
+        showInstantPreview(meta);
+      }
     }catch(err){
-      showInstantPreview({ url: normalized, title: 'Preview unavailable', description: '', image: '', status: 'error' });
+      if (reqId === previewRequestId) {
+        showInstantPreview({ url: normalized, title: 'Preview unavailable', description: '', image: '', status: 'error' });
+      }
     }
   });
 
@@ -284,15 +300,32 @@
           meta = { url, title: url, description: '', image: '', status:'pending' };
         }
       }
-      const message = { id: String(Date.now()) + Math.random().toString(36).slice(2), url, title: meta.title || url, image: meta.image || '', description: meta.description || '', status: meta.status };
       const cat = state.lastCategory;
       state.links[cat] = state.links[cat] || [];
-      state.links[cat].push(message);
-      saveState();
-      chatEl.appendChild(renderMessageBubble(message));
-      scrollChatToBottom();
-      linkInput.value = '';
-      hideInstantPreview();
+      // Deduplicate: if URL exists, update and move to bottom
+      const existingIndex = state.links[cat].findIndex(m => m.url === url);
+      if (existingIndex !== -1) {
+        const existing = state.links[cat][existingIndex];
+        existing.title = meta.title || url;
+        existing.description = meta.description || '';
+        existing.image = meta.image || '';
+        existing.status = meta.status;
+        state.links[cat].splice(existingIndex, 1);
+        state.links[cat].push(existing);
+        saveState();
+        renderMessages(cat);
+        scrollChatToBottom();
+        linkInput.value = '';
+        hideInstantPreview();
+      } else {
+        const message = { id: String(Date.now()) + Math.random().toString(36).slice(2), url, title: meta.title || url, image: meta.image || '', description: meta.description || '', status: meta.status };
+        state.links[cat].push(message);
+        saveState();
+        chatEl.appendChild(renderMessageBubble(message));
+        scrollChatToBottom();
+        linkInput.value = '';
+        hideInstantPreview();
+      }
     } finally{
       sendBtn.disabled = false;
     }
@@ -322,18 +355,37 @@
 
   async function fetchPreview(url){
     const endpoint = 'https://jsonlink.io/api/extract?url=' + encodeURIComponent(url);
-    const res = await fetch(endpoint, { headers: { 'accept':'application/json' } });
-    if (!res.ok) throw new Error('Preview fetch failed');
-    const data = await res.json();
-    const image = (Array.isArray(data.images) && data.images[0]) || data.image || data.icon || '';
-    const title = data.title || (data.url ? new URL(data.url).hostname : new URL(url).hostname);
-    const description = data.description || '';
-    return { url, title, description, image, status:'ok' };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try{
+      const res = await fetch(endpoint, { headers: { 'accept':'application/json' }, signal: controller.signal });
+      if (!res.ok) throw new Error('Preview fetch failed');
+      const data = await res.json();
+      let image = (Array.isArray(data.images) && data.images[0]) || data.image || data.icon || '';
+      const base = data.url || url;
+      if (image && typeof image === 'string') {
+        try{ image = new URL(image, base).href; }catch{ /* ignore */ }
+      }
+      const title = data.title || (data.url ? new URL(data.url).hostname : new URL(url).hostname);
+      const description = data.description || '';
+      return { url, title, description, image, status:'ok' };
+    } finally{
+      clearTimeout(timeoutId);
+    }
   }
 
   // Online/offline
   window.addEventListener('online', () => { updateOnlineBadge(); syncPendingPreviews(); });
   window.addEventListener('offline', updateOnlineBadge);
+
+  // Allow Escape key to close the dropdown globally
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape'){
+      dropdown.classList.remove('open');
+      categoryToggle.setAttribute('aria-expanded', 'false');
+      categoryMenu.setAttribute('aria-hidden', 'true');
+    }
+  });
 
   function updateOnlineBadge(){
     const isOnline = navigator.onLine;

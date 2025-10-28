@@ -1,4 +1,4 @@
-const CACHE_NAME = 'linksaver-chat-v1';
+const CACHE_NAME = 'linksaver-chat-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -26,21 +26,49 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only handle same-origin requests with cache-first
+  // Only handle GET requests
+  if (req.method !== 'GET') return;
+
+  // Navigation requests: network-first with offline fallback
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 4000);
+          const fresh = await fetch('./index.html', { signal: controller.signal });
+          clearTimeout(id);
+          const copy = fresh.clone();
+          const cache = await caches.open(CACHE_NAME);
+          cache.put('./index.html', copy);
+          return fresh;
+        } catch (err) {
+          const cached = await caches.match('./index.html');
+          if (cached) return cached;
+          // As a last resort, try the request cache
+          const fallback = await caches.match(req);
+          return fallback || Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
+  // Same-origin assets: stale-while-revalidate
   if (url.origin === location.origin) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) return cached;
-        return fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(req);
+        const networkPromise = fetch(req).then((res) => {
+          cache.put(req, res.clone());
           return res;
-        }).catch(() => {
-          // Offline fallback for navigation
-          if (req.mode === 'navigate') return caches.match('./index.html');
-        });
-      })
+        }).catch(() => undefined);
+        return cached || networkPromise || caches.match('./index.html');
+      })()
     );
+    return;
   }
-  // For cross-origin (like jsonlink), just do network
+
+  // Cross-origin (like jsonlink): network only
 });
